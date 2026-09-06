@@ -145,6 +145,7 @@ class MockMailtea
     in ["POST", "/v1/templates/render"] then [200, { html: "<p>Rendered</p>", text: "Rendered" }]
     in ["POST", "/v1/templates"] then [200, { id: "tpl_1", object: "template" }]
     in ["GET", "/v1/templates"] then [200, list_of]
+    in ["POST", "/v1/domains/claim"] then [200, domain_claim("clm_1")]
     in ["POST", "/v1/domains"] then [200, { id: "dom_1", records: [] }]
     in ["GET", "/v1/domains"] then [200, list_of]
     in ["POST", "/v1/webhooks/endpoints"] then [200, { id: "whe_1", signing_secret: "whsec_dGVzdA" }]
@@ -244,6 +245,10 @@ class MockMailtea
   end
 
   def domains(verb, id, tail)
+    # /v1/domains/claims/:id sits a level deeper than /v1/domains/:id, so the
+    # claim id is tail[0], not the id the caller's path handed us.
+    return claims(verb, tail[0], tail[1]) if id == "claims"
+
     case [verb, tail[0]]
     in ["GET", nil] then [200, { object: "domain", id: id, status: "pending", records: [] }]
     in ["PATCH", nil] then [200, { object: "domain", id: id }]
@@ -255,6 +260,42 @@ class MockMailtea
     in ["DELETE", "tracking-domains"] then [200, { id: tail[1], deleted: true }]
     else [404, { error: "Not Found" }]
     end
+  end
+
+  def claims(verb, id, tail)
+    case [verb, tail]
+    in ["GET", nil] then [200, domain_claim(id)]
+    in ["DELETE", nil] then [200, { object: "domain_claim", id: id, deleted: true }]
+    # Verify answers with the claim AND the domain it produced, so the claimant
+    # can publish its DNS without a second request.
+    in ["POST", "verify"]
+      [200, domain_claim(id, "completed", "dom_2").merge(
+        domain: { object: "domain", id: "dom_2", status: "pending", records: [] }
+      )]
+    else [404, { error: "Not Found" }]
+    end
+  end
+
+  # A domain claim in the shape apps/api/src/domain-claims-rest.ts returns: the
+  # TXT record to publish lives in +records+, never in a bare +txt+ field.
+  def domain_claim(id, status = "pending", domain_id = nil)
+    completed = status == "completed"
+    {
+      object: "domain_claim",
+      id: id,
+      publication_id: "pub_1",
+      name: "acme.com",
+      region: "eu-west-1",
+      status: status,
+      records: [{ record: "Claim", type: "TXT", name: "_mailtea-claim.acme.com",
+                  value: "mailtea-claim=#{id}",
+                  status: completed ? "verified" : "pending" }],
+      failure_reason: nil,
+      domain_id: domain_id,
+      created_at: "2026-09-01T00:00:00.000Z",
+      expires_at: completed ? nil : "2026-09-08T00:00:00.000Z",
+      completed_at: completed ? "2026-09-01T00:10:00.000Z" : nil
+    }
   end
 
   def automations(verb, id, tail)

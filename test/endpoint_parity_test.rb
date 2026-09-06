@@ -30,6 +30,8 @@ class EndpointParityTest < Minitest::Test
     "/v1/contacts/",
     "/v1/domains",
     "/v1/domains/",
+    "/v1/domains/claim",
+    "/v1/domains/claims/",
     "/v1/emails",
     "/v1/emails/",
     "/v1/emails/analytics",
@@ -68,7 +70,7 @@ class EndpointParityTest < Minitest::Test
     "topics" => %i[create list get update delete],
     "templates" => %i[render create list get update publish unpublish versions
                       restore_version duplicate delete],
-    "domains" => %i[create list get verify update delete tracking],
+    "domains" => %i[create list get verify update delete tracking claims],
     "webhooks" => %i[create list get update delete],
     "contact_properties" => %i[create list update delete],
     "api_keys" => %i[create list revoke],
@@ -129,6 +131,9 @@ class EndpointParityTest < Minitest::Test
     end
     %i[create list verify delete].each do |method|
       assert client.domains.tracking.respond_to?(method)
+    end
+    %i[create get verify cancel].each do |method|
+      assert client.domains.claims.respond_to?(method)
     end
   end
 end

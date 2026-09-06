@@ -60,7 +60,7 @@ module Mailtea
     attr_reader :topics
     # Reusable server-side email templates.
     attr_reader :templates
-    # Sending domains and their tracking sub-domains.
+    # Sending domains, their tracking sub-domains, and claims on domains held by other teams.
     attr_reader :domains
     # Outbound event subscriptions.
     attr_reader :webhooks
