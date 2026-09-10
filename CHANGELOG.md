@@ -2,7 +2,7 @@
 
 All notable changes to the `mailtea` Ruby gem are documented here.
 
-## Unreleased
+## 0.3.0 (2026-09-10)
 
 - Added: `mailtea.domains.update(id, tracking_subdomain: nil)` removes a
   tracking subdomain. The domain's links go back to being served from the
