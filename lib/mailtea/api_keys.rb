@@ -11,7 +11,13 @@ module Mailtea
     # Create an API key. The +token+ is returned ONCE — store it securely.
     #
     # Takes +name+, optional +permission+ ("full_access" or "sending_access"),
-    # and optional +domain_id+.
+    # optional +domain_id+, and optional +mode+.
+    #
+    # +mode+ is "live" (the default) or "test". A test key is prefixed
+    # <tt>mt_test_</tt>: its sends are validated, recorded and emit webhooks but
+    # are never delivered, and it reads only test mail. It is NOT a data sandbox
+    # — it reads and writes your real contacts, templates, senders and webhooks.
+    # Only delivery is simulated.
     def create(params = nil, **fields)
       request("POST", "/v1/api-keys", payload(params, fields))
     end

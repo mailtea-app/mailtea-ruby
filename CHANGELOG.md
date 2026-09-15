@@ -2,6 +2,21 @@
 
 All notable changes to the `mailtea` Ruby gem are documented here.
 
+## 0.4.0 (2026-09-15)
+
+- Added: test mode. `mailtea.api_keys.create(name: "CI", mode: "test")` mints a
+  test key (prefixed `mt_test_`) whose sends are validated, recorded and
+  webhook-emitting but never delivered, so CI can run against production Mailtea
+  with your real code and your real webhook handler. A test key is **not** a
+  data sandbox — it reads and writes your real contacts, templates, senders and
+  webhooks. Only delivery is simulated.
+- Added: `mailtea.emails.list(mode: "test")` reads test-mode mail, and every
+  email carries `mode`. There is no mixed view: a test key reads only test
+  emails and a live key only live ones.
+- Reserved recipients on `test.mailtea.email` force an outcome: `delivered@`,
+  `bounced@`, `complained@`, `delayed@`, `failed@`. The first `to` recipient
+  decides; anything else is delivered.
+
 ## 0.3.0 (2026-09-10)
 
 - Added: `mailtea.domains.update(id, tracking_subdomain: nil)` removes a
