@@ -105,12 +105,18 @@ class TemplatesTest < MailteaTest
     versions = @mailtea.templates.versions("tpl_1", publication_id: "pub_1", limit: 5)
     assert_request "GET", "/v1/templates/tpl_1/versions"
     assert_equal 2, versions["data"].first["version"]
+    # The working copy is not what is sending while there are unpublished changes.
+    assert_equal true, versions["data"].first["is_current"]
+    assert_equal false, versions["data"].first["is_published"]
 
     restored = @mailtea.templates.restore_version("tpl_1", 1, publication_id: "pub_1")
     assert_request "POST", "/v1/templates/tpl_1/versions/1/restore"
     assert_equal 1, restored["restored_from_version"]
-    # A restore is a content write, so it drops the template back to draft.
-    assert_equal true, restored["unpublished"]
+    # A restore no longer unpublishes: the template stays published, and
+    # has_unpublished_versions is what says the restore is not live yet.
+    assert_equal false, restored["unpublished"]
+    assert_equal true, restored["template"]["has_unpublished_versions"]
+    assert_match(/saved but not published/, restored["message"])
   end
 end
 

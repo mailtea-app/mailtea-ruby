@@ -59,7 +59,11 @@ module Mailtea
     #
     # <tt>validate_only: true</tt> returns an +automation_validation+ and writes
     # nothing. A graph change that carries errors saves anyway while the
-    # automation is draft/paused/archived; on an +active+ one it is a 422 —
+    # automation is draft/paused/archived. On an +active+ one it is a 422
+    # +active_graph_invalid+ only when it adds an error the live version does
+    # not already have; +issues+ then lists just those new problems, and older
+    # ones come back with <tt>pre_existing: true</tt>. Changing an +active+
+    # automation's trigger is a 422 +trigger_locked_while_active+. Either way:
     # pause, save, then start again.
     def update(id, params = nil, **fields)
       scope, body = Util.split_publication(payload(params, fields), keep_in_body: false)
@@ -75,7 +79,9 @@ module Mailtea
 
     # Start the automation so new contacts enroll. Requires +publication_id+. A
     # graph with errors is refused with 422 +automation_invalid+ and the
-    # blocking +issues+.
+    # blocking +issues+, except an +unknown_step_ref+ at a <tt>config.*</tt>
+    # path or a trigger +missing_branch+ that the version it last ran on
+    # already had (<tt>pre_existing: true</tt>).
     def activate(id, params = nil, **filters)
       request("POST", "/v1/automations/" + escape(id) + "/activate" + query(payload(params, filters)))
     end

@@ -46,6 +46,13 @@ module Mailtea
     # +global_css+, +category+, +preview_image_url+, +tags+, +text+, +subject+,
     # +from+ and +reply_to+ accept +nil+ to clear them. +publication_id+ is
     # required and goes in the query string.
+    #
+    # Editing a published template no longer unpublishes it: the change is
+    # saved as the working copy, the template keeps its published status, and
+    # the published version keeps sending until #publish is called again. The
+    # reply's +unpublished+ is kept for compatibility and is always +false+
+    # now; check +has_unpublished_versions+ on the reply instead (it also
+    # carries +message+ when that is +true+).
     def update(id, params = nil, **fields)
       scope, body = Util.split_publication(payload(params, fields))
       request("PATCH", "/v1/templates/" + escape(id) + scope, body)
@@ -57,8 +64,11 @@ module Mailtea
     end
 
     # Return a published template to draft. +published_at+ is kept — it records
-    # that the template was published once, not that it still is. Requires
-    # +publication_id+.
+    # that the template was published once, not that it still is. This is now
+    # the only way to stop a published template sending, short of deleting it
+    # (editing or restoring it no longer does that on its own). It also drops
+    # the published version, so the next #publish starts from the current
+    # (working) content. Requires +publication_id+.
     def unpublish(id, params = nil, **filters)
       request("POST", "/v1/templates/" + escape(id) + "/unpublish" + query(payload(params, filters)))
     end
@@ -66,13 +76,18 @@ module Mailtea
     # List a template's design history, newest first. Requires +publication_id+;
     # optional +limit+ (the server caps it at the retained maximum).
     #
-    # Entries are metadata only — +version+, +origin+ ("edit", "publish" or
+    # Entries are metadata only: +version+, +origin+ ("edit", "publish" or
     # "restore"), +restored_from_version+, +format+, +name+, +sealed+,
-    # +is_current+, +created_at+, +updated_at+ and +author+ (or nil) — never the
-    # design document, which one entry alone can carry half a megabyte of.
-    # +is_current+ marks the design the template is serving right now, which is
-    # not always the newest entry: a metadata-only update touches the template
-    # without recording a version.
+    # +is_current+, +is_published+, +created_at+, +updated_at+ and +author+ (or
+    # nil). The design document is never included, because one entry alone can
+    # carry half a megabyte of it. +is_current+ marks the entry that matches the working copy
+    # (the saved design being edited), which is not always the newest entry: a
+    # metadata-only update touches the template without recording a version.
+    # +is_published+ (a boolean) marks the entry automations and the API are
+    # sending now. They differ while a published template has unpublished
+    # changes. +is_published+ is +false+ on every entry of a draft, and on every
+    # entry of a template published before the field existed until it is
+    # published again.
     #
     # The reply also carries +retention+: only the newest +max_versions+ are
     # kept, and consecutive edits by the same author within
@@ -84,10 +99,13 @@ module Mailtea
     # Put an older design from #versions back onto the template. Requires
     # +publication_id+.
     #
-    # *Restoring is a content write, so the template returns to draft* —
-    # automations and the API stop sending it until #publish is called again.
-    # The reply's +unpublished+ reports whether that just happened; re-publishing
-    # is the caller's job.
+    # *Restoring no longer unpublishes the template.* It is a content write,
+    # and lands in the working copy: a published template keeps its published
+    # status and keeps sending its published version until #publish makes the
+    # restored design live. The reply's +unpublished+ is kept for
+    # compatibility and is always +false+ now; check +has_unpublished_versions+
+    # on the returned +template+ (or the reply's +message+) to see whether the
+    # restored design is live yet.
     #
     # History is forward-only: the design being replaced is recorded as its own
     # version first, then the restored design is appended as the new newest one.
@@ -96,10 +114,10 @@ module Mailtea
     #
     # Restoring the design that is already current writes nothing and returns
     # <tt>restored: false</tt> with <tt>reason: "identical"</tt> and
-    # <tt>unpublished: false</tt>, so a no-op restore cannot unpublish a live
-    # template. A version that has aged out of retention raises Mailtea::Error
-    # with +code+ "template_version_not_found". Returns +restored+,
-    # +restored_from_version+, +unpublished+, +message+ and the updated +template+.
+    # <tt>unpublished: false</tt>. A version that has aged out of retention
+    # raises Mailtea::Error with +code+ "template_version_not_found". Returns
+    # +restored+, +restored_from_version+, +unpublished+, +message+ and the
+    # updated +template+.
     def restore_version(id, version, params = nil, **filters)
       request(
         "POST",

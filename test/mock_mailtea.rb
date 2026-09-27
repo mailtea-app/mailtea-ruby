@@ -237,9 +237,16 @@ class MockMailtea
     in ["POST", "publish"] then [200, { object: "template", id: id, status: "published" }]
     in ["POST", "unpublish"] then [200, { object: "template", id: id, status: "draft" }]
     in ["POST", "duplicate"] then [200, { object: "template", id: "tpl_copy" }]
-    in ["GET", "versions"] then [200, { object: "list", data: [{ version: 2, is_current: true }] }]
+    in ["GET", "versions"] then [200, { object: "list", data: [{ version: 2, is_current: true, is_published: false }] }]
     in ["POST", "versions"]
-      [200, { restored: true, restored_from_version: tail[1].to_i, unpublished: true }]
+      [200, {
+        restored: true,
+        restored_from_version: tail[1].to_i,
+        unpublished: false,
+        message: "Restored version #{tail[1].to_i}. Your changes are saved but not published. " \
+                 "Automations and the API keep sending the published version until you publish this template again.",
+        template: { object: "template", id: id, status: "published", has_unpublished_versions: true }
+      }]
     else [404, { error: "Not Found" }]
     end
   end

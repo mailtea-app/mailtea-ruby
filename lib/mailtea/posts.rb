@@ -7,10 +7,19 @@ module Mailtea
   # <tt>mailtea.posts</tt>.
   class Posts < Resource
     # Create a newsletter post (a draft by default). Seed it from a published
-    # server template with +template_id+ + +variables+, or pass inline +html+.
-    # +kind+ selects the post type ("newsletter" or "broadcast"). Set
-    # <tt>send: true</tt> to deliver right after creating (or with
-    # +scheduled_at+ to schedule) — that requires the +issues:send+ scope.
+    # server template with +template_id+ + +variables+, using the template's
+    # PUBLISHED version and not any unpublished edits saved since, or pass
+    # inline +html+. The +variables+ you pass are filled in, in both the
+    # <tt>{{key}}</tt> and Visual Email Designer <tt>{key}</tt> forms, and
+    # HTML-escaped (use <tt>{{{key}}}</tt> in the template for raw HTML).
+    # Everything else is left for the broadcast to fill per recipient: a
+    # declared variable you do not pass keeps its +fallback_value+ for
+    # recipients with no value, and undeclared tokens like
+    # <tt>{{contact.first_name}}</tt> stay as they are. The post keeps the
+    # template's published page style. +kind+ selects the post type
+    # ("newsletter" or "broadcast"). Set <tt>send: true</tt> to deliver right
+    # after creating (or with +scheduled_at+ to schedule); that requires the
+    # +issues:send+ scope.
     #
     # Returns <tt>{ "id" => ... }</tt>.
     def create(params = nil, publication_id: UNSET, subject: UNSET, html: UNSET,
