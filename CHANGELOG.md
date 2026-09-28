@@ -2,7 +2,7 @@
 
 All notable changes to the `mailtea` Ruby gem are documented here.
 
-## Unreleased
+## 0.5.0 (2026-09-28)
 
 - Breaking: `Posts#create` with `template_id` now HTML-escapes the `variables`
   you pass, the same as every other send. HTML passed in a `{{key}}` value now
