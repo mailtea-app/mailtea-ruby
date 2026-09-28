@@ -139,7 +139,7 @@ mailtea = Mailtea::Client.new(ENV["MAILTEA_API_KEY"], transport: recorder)
 | `templates.create / list / get / update / publish / unpublish / duplicate / delete` | Manage reusable email templates |
 | `templates.render(params)` | Render a spec to HTML without saving → `{ "html", "text" }` |
 | `templates.versions(id, params = nil)` | List a template's design history, newest first (metadata only) |
-| `templates.restore_version(id, version, params = nil)` | Put an older design back as unpublished changes; a published template keeps sending its published version until you `publish` again |
+| `templates.restore_version(id, version, params = nil)` | Put an older design back, with its From and Reply-To, as unpublished changes; a published template keeps sending its published version until you `publish` again |
 | `assets.upload / list / delete` | The publication's image library (raw bytes are base64-encoded for you) |
 | `suppressions.list / add / remove` | Manage the team-wide do-not-send list |
 | `suppressions.export` | Export the whole suppression list as CSV (raw text) |
