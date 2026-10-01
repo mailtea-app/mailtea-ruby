@@ -54,8 +54,10 @@ module Mailtea
   # lists to prove you control the DNS, then #verify it. On success the other
   # team's domain is released and a fresh one is created for you.
   class DomainClaims < Resource
-    # Open a claim. Takes +publication_id+, +name+ and an optional +region+.
-    # The response +records+ lists the TXT record to publish.
+    # Open a claim. Takes +publication_id+, +name+ and optional +region+ and
+    # +purpose+ ("email", "site" or "both", default "email"): the domain the
+    # claim produces is created with that purpose. The response +records+ lists
+    # the TXT record to publish, and every claim carries +purpose+.
     def create(params = nil, **fields)
       request("POST", "/v1/domains/claim", payload(params, fields))
     end
