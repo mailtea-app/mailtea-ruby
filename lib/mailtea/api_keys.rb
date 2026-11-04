@@ -10,8 +10,10 @@ module Mailtea
   class ApiKeys < Resource
     # Create an API key. The +token+ is returned ONCE — store it securely.
     #
-    # Takes +name+, optional +permission+ ("full_access", "sending_access" or
-    # "drafts_only", which writes drafts but can never send),
+    # Takes +name+, optional +permission+ ("full_access", "sending_access",
+    # "drafts_only", which writes drafts but can never send, or
+    # "drafts_and_templates", which also builds and publishes templates and
+    # never sends),
     # optional +domain_id+, and optional +mode+.
     #
     # +mode+ is "live" (the default) or "test". A test key is prefixed
